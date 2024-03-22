@@ -1,67 +1,55 @@
 import streamlit as st
-import re
+from io import StringIO
 
-def parse_moodle_question(question_text):
+def generate_moodle_question_format(question_type, title, body, answers, correct_answer_index):
     """
-    Analiza el texto de una pregunta de Moodle y extrae sus componentes.
+    Genera el formato de pregunta de Moodle basado en los inputs del usuario.
     """
-    # Extrae el título y el cuerpo de la pregunta.
-    title_match = re.search(r"// question: \d+  name: (.+)", question_text)
-    body_start = question_text.find("::") + 2
-    body_end = question_text.find("{")
-    body = question_text[body_start:body_end].strip()
-
-    title = title_match.group(1) if title_match else "Pregunta sin título"
-
-    # Extrae las respuestas
-    answers_text = question_text[body_end:]
-    answers = re.findall(r"([~=])([^\n]+)", answers_text)
-    answers_components = []
-    for correct, text in answers:
-        answers_components.append({
-            "text": text.strip(),
-            "correct": True if correct == "=" else False
-        })
-
-    components = {
-        "title": title,
-        "body": body,
-        "answers": answers_components
-    }
-    return components
-
-def display_question(question_components):
-    """
-    Muestra una pregunta y sus componentes usando Streamlit.
-    """
-    st.subheader(question_components["title"])
-    st.markdown(question_components["body"], unsafe_allow_html=True)
-    for answer in question_components["answers"]:
-        # Usar markdown para permitir formato HTML en las respuestas
-        label = "✅ " + answer["text"] if answer["correct"] else "❌ " + answer["text"]
-        st.markdown(label, unsafe_allow_html=True)
+    question_text = f"// question: XXXXXXX  name: {title}\n::{title}::[html]{body}{"
+    for i, answer in enumerate(answers):
+        prefix = "=" if i == correct_answer_index else "~"
+        question_text += f"\n\t{prefix}<p>{answer}</p>"
+    question_text += "\n}\n"
+    return question_text
 
 def main():
     """
     Función principal para ejecutar la app de Streamlit.
     """
-    st.title("Visualizador de Preguntas Moodle")
+    st.title("Creador de Preguntas Moodle")
 
-    # Carga de archivo
-    uploaded_file = st.file_uploader("Cargar archivo de preguntas Moodle", type=['txt'])
-    
-    if uploaded_file is not None:
-        # Leer el contenido del archivo
-        question_text = uploaded_file.read().decode("utf-8")
-        
-        # Dividir el contenido en preguntas individuales.
-        questions = question_text.split('// question:')
-        questions = questions[1:]  # Elimina el primer elemento vacío si existe
-        
-        for question in questions:
-            question = '// question:' + question  # Reañade el prefijo removido al dividir
-            components = parse_moodle_question(question)
-            display_question(components)
+    # Entradas para la creación de la pregunta
+    question_type = st.selectbox("Tipo de pregunta", ["Opción múltiple", "Verdadero/Falso", "Respuesta corta"])
+    title = st.text_input("Título de la pregunta")
+    body = st.text_area("Cuerpo de la pregunta", height=150)
+    answers = []
+    correct_answer_index = None
+
+    if question_type == "Opción múltiple":
+        for i in range(4):  # Asumimos 4 respuestas para simplificar
+            answer = st.text_input(f"Respuesta {i + 1}", key=f"answer_{i}")
+            answers.append(answer)
+        correct_answer_index = st.selectbox("Índice de la respuesta correcta", options=range(1, 5), format_func=lambda x: f"Respuesta {x}") - 1
+    elif question_type == "Verdadero/Falso":
+        answers = ["VERDADERO", "FALSO"]
+        correct_answer_index = st.selectbox("Respuesta correcta", options=[1, 2], format_func=lambda x: "VERDADERO" si x == 1 else "FALSO") - 1
+
+    # Botón para generar el formato de la pregunta y escribirlo a un archivo
+    if st.button("Generar Formato de Pregunta"):
+        if not all([title, body, answers, correct_answer_index is not None]):
+            st.error("Por favor, completa todos los campos.")
+        else:
+            question_format = generate_moodle_question_format(question_type, title, body, answers, correct_answer_index)
+            # Crear un objeto StringIO para alojar el texto de la pregunta
+            question_file = StringIO()
+            question_file.write(question_format)
+            question_file.seek(0)  # Moverse al principio del archivo para la descarga
+
+            # Crear un link de descarga
+            st.download_button(label="Descargar Pregunta Moodle",
+                               data=question_file,
+                               file_name="moodle_question.txt",
+                               mime="text/plain")
 
 if __name__ == "__main__":
     main()
