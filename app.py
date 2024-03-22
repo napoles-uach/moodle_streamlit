@@ -1,5 +1,4 @@
 import streamlit as st
-from io import StringIO
 
 def generate_moodle_question_format(question_type, title, body, answers, correct_answer_index):
     """
@@ -18,7 +17,6 @@ def main():
     """
     st.title("Creador de Preguntas Moodle")
 
-    # Entradas para la creación de la pregunta
     question_type = st.selectbox("Tipo de pregunta", ["Opción múltiple", "Verdadero/Falso"])
     title = st.text_input("Título de la pregunta")
     body = st.text_area("Cuerpo de la pregunta", height=150)
@@ -26,7 +24,7 @@ def main():
     correct_answer_index = None
 
     if question_type == "Opción múltiple":
-        for i in range(4):  # Asumimos 4 respuestas para simplificar
+        for i in range(4):
             answer = st.text_input(f"Respuesta {i + 1}", key=f"answer_{i}")
             answers.append(answer)
         correct_answer_index = st.selectbox("Índice de la respuesta correcta", options=list(range(1, 5)), format_func=lambda x: f"Respuesta {x}") - 1
@@ -35,18 +33,19 @@ def main():
         correct_answer = st.radio("Respuesta correcta", options=["VERDADERO", "FALSO"])
         correct_answer_index = 0 if correct_answer == "VERDADERO" else 1
 
-    # Botón para generar el formato de la pregunta y escribirlo a un archivo
     if st.button("Generar Formato de Pregunta"):
         if not all([title, body, answers, correct_answer_index is not None]):
             st.error("Por favor, completa todos los campos.")
         else:
             question_format = generate_moodle_question_format(question_type, title, body, answers, correct_answer_index)
-            # Crear un objeto StringIO para alojar el texto de la pregunta
-            question_file_content = question_format
+            
+            # Mostrar el formato de la pregunta en la pantalla
+            st.subheader("Formato de la Pregunta Moodle")
+            st.code(question_format, language='plaintext')
 
             # Crear un link de descarga
             st.download_button(label="Descargar Pregunta Moodle",
-                               data=question_file_content,
+                               data=question_format,
                                file_name="moodle_question.txt",
                                mime="text/plain")
 
