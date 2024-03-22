@@ -5,12 +5,11 @@ def generate_moodle_question_format(question_type, title, body, answers, correct
     """
     Genera el formato de pregunta de Moodle basado en los inputs del usuario.
     """
-    # Ajuste para el manejo de las llaves dentro de la f-string
     question_text = f"// question: XXXXXXX  name: {title}\n::{title}::[html]{body}{{"
     for i, answer in enumerate(answers):
         prefix = "=" if i == correct_answer_index else "~"
         question_text += f"\n\t{prefix}<p>{answer}</p>"
-    question_text += "\n}}\n"  # Duplicar las llaves para incluir literalmente
+    question_text += "\n}}\n"
     return question_text
 
 def main():
@@ -43,13 +42,11 @@ def main():
         else:
             question_format = generate_moodle_question_format(question_type, title, body, answers, correct_answer_index)
             # Crear un objeto StringIO para alojar el texto de la pregunta
-            question_file = StringIO()
-            question_file.write(question_format)
-            question_file.seek(0)  # Moverse al principio del archivo para la descarga
+            question_file_content = question_format
 
             # Crear un link de descarga
             st.download_button(label="Descargar Pregunta Moodle",
-                               data=question_file,
+                               data=question_file_content,
                                file_name="moodle_question.txt",
                                mime="text/plain")
 
