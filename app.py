@@ -5,12 +5,12 @@ def generate_moodle_question_format(question_type, title, body, answers, correct
     """
     Genera el formato de pregunta de Moodle basado en los inputs del usuario.
     """
-    # Corrección aplicada aquí para manejar correctamente las llaves dentro de la f-string
+    # Ajuste para el manejo de las llaves dentro de la f-string
     question_text = f"// question: XXXXXXX  name: {title}\n::{title}::[html]{body}{{"
     for i, answer in enumerate(answers):
         prefix = "=" if i == correct_answer_index else "~"
         question_text += f"\n\t{prefix}<p>{answer}</p>"
-    question_text += "\n}}\n"  # Se duplican las llaves para cerrar literalmente
+    question_text += "\n}}\n"  # Duplicar las llaves para incluir literalmente
     return question_text
 
 def main():
@@ -20,7 +20,7 @@ def main():
     st.title("Creador de Preguntas Moodle")
 
     # Entradas para la creación de la pregunta
-    question_type = st.selectbox("Tipo de pregunta", ["Opción múltiple", "Verdadero/Falso", "Respuesta corta"])
+    question_type = st.selectbox("Tipo de pregunta", ["Opción múltiple", "Verdadero/Falso"])
     title = st.text_input("Título de la pregunta")
     body = st.text_area("Cuerpo de la pregunta", height=150)
     answers = []
@@ -30,10 +30,11 @@ def main():
         for i in range(4):  # Asumimos 4 respuestas para simplificar
             answer = st.text_input(f"Respuesta {i + 1}", key=f"answer_{i}")
             answers.append(answer)
-        correct_answer_index = st.selectbox("Índice de la respuesta correcta", options=range(1, 5), format_func=lambda x: f"Respuesta {x}") - 1
+        correct_answer_index = st.selectbox("Índice de la respuesta correcta", options=list(range(1, 5)), format_func=lambda x: f"Respuesta {x}") - 1
     elif question_type == "Verdadero/Falso":
         answers = ["VERDADERO", "FALSO"]
-        correct_answer_index = st.selectbox("Respuesta correcta", options=[1, 2], format_func=lambda x: "VERDADERO" si x == 1 else "FALSO") - 1
+        correct_answer = st.radio("Respuesta correcta", options=["VERDADERO", "FALSO"])
+        correct_answer_index = 0 if correct_answer == "VERDADERO" else 1
 
     # Botón para generar el formato de la pregunta y escribirlo a un archivo
     if st.button("Generar Formato de Pregunta"):
