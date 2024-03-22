@@ -5,11 +5,12 @@ def generate_moodle_question_format(question_type, title, body, answers, correct
     """
     Genera el formato de pregunta de Moodle basado en los inputs del usuario.
     """
-    question_text = f"// question: XXXXXXX  name: {title}\n::{title}::[html]{body}{"
+    # Corrección aplicada aquí para manejar correctamente las llaves dentro de la f-string
+    question_text = f"// question: XXXXXXX  name: {title}\n::{title}::[html]{body}{{"
     for i, answer in enumerate(answers):
         prefix = "=" if i == correct_answer_index else "~"
         question_text += f"\n\t{prefix}<p>{answer}</p>"
-    question_text += "\n}\n"
+    question_text += "\n}}\n"  # Se duplican las llaves para cerrar literalmente
     return question_text
 
 def main():
